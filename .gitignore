@@ -1,0 +1,11 @@
+__pycache__/
+.idea/
+instance/
+static/uploads/*
+!static/uploads/.gitkeep
+.env
+dataset/
+Images - 1/
+Bounding Boxes - YOLO Format - 1/
+*.db
+*.log

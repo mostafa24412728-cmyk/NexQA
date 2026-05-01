@@ -1,0 +1,14 @@
+path: C:\Users\win\Downloads\archive (2)\dataset
+train: images/train
+val: images/val
+nc: 8
+names:
+- Quartzity
+- Live_Knot
+- Marrow
+- resin
+- Dead_Knot
+- knot_with_crack
+- Knot_missing
+- Crack
+test: images/test
