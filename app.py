@@ -124,6 +124,9 @@ def index():
                 <input type="file" name="file" accept="image/*" required><br>
                 <button type="submit">Analyze Image</button>
             </form>
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid #3a3f55;">
+            <p>Ready to go mobile?</p>
+            <a href="/download" style="display: inline-block; background: #00E5FF; color: black; text-decoration: none; padding: 12px 25px; border-radius: 10px; font-weight: bold;">Download Mobile App (APK)</a>
         </div>
     </body>
     </html>
@@ -277,5 +280,11 @@ def api_login():
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
+@app.route('/download')
+def download_app():
+    return send_from_directory('static/downloads', 'nexqa.apk', as_attachment=True)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    # Use environment port for Railway/Render, fallback to 5001
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)
