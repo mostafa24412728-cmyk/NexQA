@@ -6,10 +6,8 @@ import 'package:http_parser/http_parser.dart';
 class ApiService {
   // Use 10.0.2.2 for Android Emulator, 127.0.0.1 for Web/iOS
   static String get baseUrl {
-    // Chrome Web often works better with 'localhost' than '127.0.0.1' due to origin policies
-    const String host = 'localhost'; 
-    if (kIsWeb) return 'http://$host:5001';
-    return 'http://10.0.2.2:5001';
+    // Production Railway server
+    return 'https://attractive-achievement-production-68c6.up.railway.app';
   }
 
 

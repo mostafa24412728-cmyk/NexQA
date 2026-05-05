@@ -1,0 +1,10 @@
+dataset/
+Images - 1/
+Bounding Boxes - YOLO Format - 1/
+runs/
+nexqa_flutter_factory_auth/
+.git/
+.idea/
+__pycache__/
+*.db
+*.log

@@ -7,5 +7,6 @@ static/uploads/*
 dataset/
 Images - 1/
 Bounding Boxes - YOLO Format - 1/
+runs/
 *.db
 *.log

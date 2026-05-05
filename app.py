@@ -10,7 +10,7 @@ from pathlib import Path
 # Configuration matching model.py
 CONFIG = {
     "model_path": "yolov8n.pt",  # Pretrained fallback
-    "best_weights": "runs/wood_defects/train/weights/best.pt",
+    "best_weights": "best.pt",
     "class_names_ar": [
         "كوارتزيت (Quartzity)",
         "عقدة حية (Live Knot)",
