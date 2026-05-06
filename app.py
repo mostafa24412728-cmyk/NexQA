@@ -1,7 +1,7 @@
 import os
 import cv2
 import base64
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from ultralytics import YOLO
@@ -197,12 +197,20 @@ def api_predict():
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0])
                 xyxy = box.xyxy[0].tolist()
+                
+                name = CONFIG["class_names_ar"][cls_id] if cls_id < len(CONFIG["class_names_ar"]) else f"Unknown ({cls_id})"
+                
                 final_results.append({
                     "class_id": cls_id,
-                    "name": CONFIG["class_names_ar"][cls_id],
+                    "name": name,
                     "confidence": round(conf, 4),
                     "box": {"x1": round(xyxy[0], 2), "y1": round(xyxy[1], 2), "x2": round(xyxy[2], 2), "y2": round(xyxy[3], 2)}
                 })
+                
+                # Draw box and text on the image
+                x1, y1, x2, y2 = map(int, xyxy)
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(img, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     
     print(f"🔍 Detections: {len(final_results)}")
     
@@ -211,9 +219,9 @@ def api_predict():
     defect_name = final_results[0]['name'] if len(final_results) > 0 else 'None'
     conf = final_results[0]['confidence'] if len(final_results) > 0 else 100.0
     
-    # Read image as base64 for database storage
-    with open(img_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    # Encode processed image as base64 for database storage and app response
+    _, buffer = cv2.imencode('.jpg', img)
+    encoded_string = base64.b64encode(buffer).decode('utf-8')
     
     import datetime
     record_id = f"#{db.session.query(ProductRecord).count() + 1}"
@@ -233,7 +241,8 @@ def api_predict():
     return jsonify({
         "success": True, 
         "data": final_results,
-        "record_id": record_id
+        "record_id": record_id,
+        "processed_image_base64": encoded_string
     })
 
 @app.errorhandler(Exception)
@@ -282,7 +291,9 @@ def uploaded_file(filename):
 
 @app.route('/download')
 def download_app():
-    return send_from_directory('static/downloads', 'nexqa.apk', as_attachment=True)
+    # Redirect to the actual GitHub Release asset
+    github_release_url = "https://github.com/mvrivmkhvled55-crypto/NexQA/releases/download/NexQA/nexqa.apk"
+    return redirect(github_release_url)
 
 if __name__ == '__main__':
     # Use environment port for Railway/Render, fallback to 5001
