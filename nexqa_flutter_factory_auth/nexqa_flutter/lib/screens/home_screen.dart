@@ -7,6 +7,7 @@ import '../providers/theme_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
 import 'camera_screen.dart';
+import 'color_mix_screen.dart';
 import 'dashboard_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -47,9 +48,9 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  Future<void> _handleNewInspection() async {
+  Future<void> _handleNewInspection({required ImageSource source}) async {
     final picker = ImagePicker();
-    final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+    final XFile? photo = await picker.pickImage(source: source);
     if (!mounted) return;
     if (photo != null) {
       final bytes = await photo.readAsBytes();
@@ -111,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen>
                       _Grid(
                         colors: colors,
                         isDark: isDark,
-                        onNewInspection: _handleNewInspection,
+                        onCamera: () => _handleNewInspection(source: ImageSource.camera),
+                        onGallery: () => _handleNewInspection(source: ImageSource.gallery),
                         onDashboard: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const DashboardScreen(),
@@ -132,6 +134,11 @@ class _HomeScreenState extends State<HomeScreen>
                         onSettings: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const SettingsScreen(),
+                          ),
+                        ),
+                        onPaintLab: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ColorMixScreen(),
                           ),
                         ),
                       ),
@@ -207,7 +214,7 @@ class _Header extends StatelessWidget {
               ),
             ),
             Text(
-              'NexQA',
+              'NexQA v2.1',
               style: GoogleFonts.inter(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
@@ -325,20 +332,24 @@ class _StatCard extends StatelessWidget {
 class _Grid extends StatelessWidget {
   final AppColors colors;
   final bool isDark;
-  final VoidCallback onNewInspection;
+  final VoidCallback onCamera;
+  final VoidCallback onGallery;
   final VoidCallback onDashboard;
   final VoidCallback onPassed;
   final VoidCallback onRejected;
   final VoidCallback onSettings;
+  final VoidCallback onPaintLab;
 
   const _Grid({
     required this.colors,
     required this.isDark,
-    required this.onNewInspection,
+    required this.onCamera,
+    required this.onGallery,
     required this.onDashboard,
     required this.onPassed,
     required this.onRejected,
     required this.onSettings,
+    required this.onPaintLab,
   });
 
   @override
@@ -353,21 +364,21 @@ class _Grid extends StatelessWidget {
             _GridCard(
               width: cardWidth,
               icon: Icons.camera_alt,
-              label: 'New Inspection',
+              label: 'Camera',
               color: colors.glowCyan,
               colors: colors,
               isDark: isDark,
-              onTap: onNewInspection,
+              onTap: onCamera,
             ),
             const SizedBox(width: 12),
             _GridCard(
               width: cardWidth,
-              icon: Icons.bar_chart,
-              label: 'Dashboard',
+              icon: Icons.photo_library,
+              label: 'Gallery',
               color: colors.glowPurple,
               colors: colors,
               isDark: isDark,
-              onTap: onDashboard,
+              onTap: onGallery,
             ),
           ],
         ),
@@ -396,17 +407,35 @@ class _Grid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Center(
-          child: _GridCard(
-            width: cardWidth,
-            icon: Icons.settings,
-            label: 'Settings',
-            color: colors.glowPink,
-            colors: colors,
-            isDark: isDark,
-            onTap: onSettings,
-            centerContent: true,
-          ),
+        Row(
+          children: [
+            _GridCard(
+              width: cardWidth,
+              icon: Icons.bar_chart,
+              label: 'Dashboard',
+              color: colors.glowPink,
+              colors: colors,
+              isDark: isDark,
+              onTap: onDashboard,
+            ),
+            const SizedBox(width: 12),
+            _GridCard(
+              width: cardWidth,
+              icon: Icons.settings,
+              label: 'Settings',
+              color: colors.glowCyan,
+              colors: colors,
+              isDark: isDark,
+              onTap: onSettings,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // ── بطاقة مختبر الدهانات (عرض كامل) ──────────────────────
+        _PaintLabCard(
+          colors: colors,
+          isDark: isDark,
+          onTap: onPaintLab,
         ),
       ],
     );
@@ -467,6 +496,123 @@ class _GridCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── بطاقة مختبر الدهانات — كامل العرض ─────────────────────────────
+class _PaintLabCard extends StatelessWidget {
+  final AppColors colors;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _PaintLabCard({
+    required this.colors,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const accentGold   = Color(0xFFD4A843);
+    const accentBrown  = Color(0xFF8B4513);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 100,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end:   Alignment.centerRight,
+            colors: isDark
+                ? [const Color(0xFF1A1200), const Color(0xFF2C1800)]
+                : [const Color(0xFFFFF8E1), const Color(0xFFFFECB3)],
+          ),
+          border: Border.all(
+            color: accentGold.withOpacity(isDark ? 0.35 : 0.5),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color:      accentGold.withOpacity(isDark ? 0.15 : 0.20),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // زخرفة خلفية
+            Positioned(
+              right: -20, top: -20,
+              child: Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentGold.withOpacity(0.07),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                children: [
+                  // أيقونة
+                  Container(
+                    width: 64, height: 64,
+                    decoration: BoxDecoration(
+                      color: accentGold.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: accentGold.withOpacity(0.4), width: 1.5),
+                    ),
+                    child: const Center(
+                      child: Text('🎨', style: TextStyle(fontSize: 32)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // النص
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'مختبر مزج الدهانات',
+                          style: GoogleFonts.cairo(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? accentGold : accentBrown,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'استخرج اللون وأنشئ وصفة الخلط بالذكاء الاصطناعي',
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            color: isDark
+                                ? accentGold.withOpacity(0.65)
+                                : accentBrown.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // سهم
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: accentGold.withOpacity(0.7),
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -110,11 +111,20 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     ];
     final shippers = ['DHL', 'FedEx', 'UPS', 'Maersk'];
 
+    Uint8List? finalImageBytes = widget.imageBytes;
+    if (response['processed_image_base64'] != null) {
+      try {
+        finalImageBytes = base64Decode(response['processed_image_base64']);
+      } catch (e) {
+        debugPrint('Failed to decode processed image: $e');
+      }
+    }
+
     final appProvider = context.read<AppProvider>();
     final product = Product(
       id: '#${appProvider.totalProducts + 1}',
       imagePath: widget.imagePath,
-      imageBytes: widget.imageBytes,
+      imageBytes: finalImageBytes,
       status: status,
       confidence: confidence,
       defectType: defectType,

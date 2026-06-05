@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/glass_card.dart';
+import '../services/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -307,6 +308,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // ── بطاقة إعدادات الخادم ──────────────────────────
+                  _ServerConfigCard(colors: colors),
+                  const SizedBox(height: 16),
                   GlassCard(
                     padding: const EdgeInsets.all(20),
                     glowColor: colors.glowPink,
@@ -372,6 +376,198 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SERVER CONFIG CARD
+// ─────────────────────────────────────────────────────────────────────────────
+class _ServerConfigCard extends StatefulWidget {
+  final dynamic colors;
+  const _ServerConfigCard({required this.colors});
+
+  @override
+  State<_ServerConfigCard> createState() => _ServerConfigCardState();
+}
+
+class _ServerConfigCardState extends State<_ServerConfigCard> {
+  late TextEditingController _ipCtrl;
+  late TextEditingController _portCtrl;
+  bool _isTesting = false;
+  String? _testResult;
+  bool? _testSuccess;
+
+  @override
+  void initState() {
+    super.initState();
+    _ipCtrl = TextEditingController(text: ApiService.currentIp);
+    _portCtrl = TextEditingController(text: ApiService.currentPort.toString());
+  }
+
+  @override
+  void dispose() {
+    _ipCtrl.dispose();
+    _portCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveAndTest() async {
+    final ip = _ipCtrl.text.trim();
+    final port = int.tryParse(_portCtrl.text.trim()) ?? 5001;
+    await ApiService.saveSettings(ip, port);
+    setState(() { _isTesting = true; _testResult = null; });
+    final ok = await ApiService.checkConnection();
+    if (!mounted) return;
+    setState(() {
+      _isTesting = false;
+      _testSuccess = ok;
+      _testResult = ok
+          ? '✅ تم الاتصال بالخادم بنجاح!'
+          : '❌ لم يتم الاتصال — تأكد من IP والمنفذ';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.colors;
+    const accent = Color(0xFF00E5FF);
+
+
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      glowColor: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SERVER CONFIG',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: c.mutedForeground,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'عنوان IP الخادم (مهم للجوّال)',
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: c.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: _ipCtrl,
+                  style: GoogleFonts.robotoMono(fontSize: 14, color: c.foreground),
+                  decoration: InputDecoration(
+                    labelText: 'IP Address',
+                    labelStyle: GoogleFonts.inter(fontSize: 12, color: c.mutedForeground),
+                    filled: true,
+                    fillColor: c.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent.withOpacity(0.3)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent.withOpacity(0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 72,
+                child: TextField(
+                  controller: _portCtrl,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.robotoMono(fontSize: 14, color: c.foreground),
+                  decoration: InputDecoration(
+                    labelText: 'Port',
+                    labelStyle: GoogleFonts.inter(fontSize: 12, color: c.mutedForeground),
+                    filled: true,
+                    fillColor: c.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent.withOpacity(0.3)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent.withOpacity(0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: _isTesting ? null : _saveAndTest,
+              icon: _isTesting
+                  ? const SizedBox(
+                      width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : const Icon(Icons.wifi_find, size: 18),
+              label: Text(
+                _isTesting ? 'جاري الاختبار...' : 'حفظ واختبار الاتصال',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          if (_testResult != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: (_testSuccess == true
+                    ? const Color(0xFF00E676)
+                    : const Color(0xFFFF5252)).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: (_testSuccess == true
+                      ? const Color(0xFF00E676)
+                      : const Color(0xFFFF5252)).withOpacity(0.4),
+                ),
+              ),
+              child: Text(
+                _testResult!,
+                style: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: _testSuccess == true
+                      ? const Color(0xFF00E676)
+                      : const Color(0xFFFF5252),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

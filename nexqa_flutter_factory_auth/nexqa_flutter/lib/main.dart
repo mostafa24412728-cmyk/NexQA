@@ -5,6 +5,7 @@ import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/auth_gate.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ void main() async {
     themeProvider.load(),
     appProvider.load(),
     authProvider.load(),
+    ApiService.loadSettings(),
   ]);
 
   runApp(

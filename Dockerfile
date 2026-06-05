@@ -1,24 +1,32 @@
-# Use an official Python runtime as a parent image
+# Use Python 3.10 slim base
 FROM python:3.10-slim
 
 # Install system dependencies for OpenCV and YOLOv8
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy requirements first (layer caching)
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Copy all project files
+COPY . .
 
-# Run gunicorn when the container launches
-# Railway will provide the PORT environment variable
-CMD gunicorn --bind 0.0.0.0:${PORT:-5000} app:app
+# Create uploads directory
+RUN mkdir -p static/uploads
+
+# Hugging Face Spaces uses port 7860
+EXPOSE 7860
+
+# Use gunicorn for production — HF Spaces provides PORT=7860
+CMD gunicorn --bind 0.0.0.0:7860 --workers 1 --timeout 120 app:app

@@ -38,31 +38,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Calculate dynamic defect data
     final Map<String, int> defectCounts = {};
     for (var p in appProvider.rejectedProducts) {
-      defectCounts[p.defectType] = (defectCounts[p.defectType] ?? 0) + 1;
+      final type = p.defectType;
+      defectCounts[type] = (defectCounts[type] ?? 0) + 1;
     }
 
-    final List<Map<String, dynamic>> dynamicDefectData = defectCounts.entries.map((e) {
-      final label = e.key;
-      final count = e.value;
-      // Assign colors based on label hash or simple mapping
-      final colorValue = label.hashCode.abs() % 0xFFFFFF;
-      return {
-        'label': label,
-        'count': count,
-        'color': 0xFF000000 | colorValue,
-      };
-    }).toList();
-
-    // Add dummy data if empty for visual consistency in demo
-    if (dynamicDefectData.isEmpty) {
-      dynamicDefectData.addAll([
-        {'label': 'None', 'count': 0, 'color': 0xFF94A3B8},
-      ]);
+    final List<Map<String, dynamic>> dynamicDefectData = [];
+    if (defectCounts.isEmpty) {
+      dynamicDefectData.add({'label': 'None', 'count': 0, 'color': 0xFF94A3B8});
+    } else {
+      defectCounts.forEach((label, count) {
+        final colorValue = label.hashCode.abs() % 0xFFFFFF;
+        dynamicDefectData.add({
+          'label': label,
+          'count': count,
+          'color': 0xFF000000 | colorValue,
+        });
+      });
     }
 
-    final maxCount = dynamicDefectData.isEmpty 
-        ? 1 
-        : dynamicDefectData.map((d) => d['count'] as int).reduce((a, b) => a > b ? a : b).clamp(1, 99999);
+    int maxCount = 1;
+    for (var d in dynamicDefectData) {
+      if ((d['count'] as int) > maxCount) {
+        maxCount = d['count'] as int;
+      }
+    }
 
     return Scaffold(
       backgroundColor: colors.background,
