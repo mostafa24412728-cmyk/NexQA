@@ -110,6 +110,15 @@ with app.app_context():
 def index():
     return render_template('landing.html')
 
+@app.route('/app')
+@app.route('/app/')
+def flutter_app():
+    return send_from_directory('static/flutter_web', 'index.html')
+
+@app.route('/app/<path:path>')
+def flutter_app_files(path):
+    return send_from_directory('static/flutter_web', path)
+
 # ── المصادقة ──────────────────────────────────────────────────────────
 import hashlib
 
