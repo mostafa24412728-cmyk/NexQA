@@ -25,8 +25,8 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p static/uploads
 
-# Hugging Face Spaces uses port 7860
-EXPOSE 7860
+# Railway injects $PORT automatically — expose it
+EXPOSE $PORT
 
-# Use gunicorn for production — HF Spaces provides PORT=7860
-CMD gunicorn --bind 0.0.0.0:7860 --workers 1 --timeout 120 app:app
+# Use gunicorn with Railway's dynamic $PORT
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 app:app
