@@ -108,7 +108,7 @@ with app.app_context():
 # --- ROUTES ---
 @app.route('/')
 def index():
-    return "<h1>🚀 NexQA Expert Engine is Running</h1>"
+    return render_template('landing.html')
 
 # ── المصادقة ──────────────────────────────────────────────────────────
 import hashlib
