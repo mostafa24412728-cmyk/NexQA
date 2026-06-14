@@ -55,13 +55,25 @@ DEFECT_KNOWLEDGE = {
     }
 }
 
-# --- MODELS ---
+# --- MODELS (Lazy Loading — يُحمَّل عند أول طلب لتوفير RAM) ---
 print("🚀 [VERIFIED VERSION 2.1] Starting NexQA Expert Engine...")
-model = YOLO('best.pt')
-print("✅ YOLO Model Loaded Successfully.")
+_model = None
+_gemini_model = None
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+def get_model():
+    global _model
+    if _model is None:
+        print("⏳ Loading YOLO model...")
+        _model = YOLO('best.pt')
+        print("✅ YOLO Model Loaded Successfully.")
+    return _model
+
+def get_gemini():
+    global _gemini_model
+    if _gemini_model is None:
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        _gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+    return _gemini_model
 
 class ProductRecord(db.Model):
     id = db.Column(db.String(50), primary_key=True)
@@ -156,14 +168,14 @@ def api_predict():
     img_path = Path(UPLOAD_FOLDER) / f"mob_{file.filename}"
     file.save(img_path)
     
-    results = model.predict(img_path, conf=0.15, verbose=False)
+    results = get_model().predict(img_path, conf=0.15, verbose=False)
     
     yolo_detections = []
     expert_report = []
     
     for r in results:
         for box in r.boxes:
-            label = model.names[int(box.cls[0])]
+            label = get_model().names[int(box.cls[0])]
             conf = float(box.conf[0])
             yolo_detections.append(label)
             
@@ -195,7 +207,7 @@ def api_predict():
     try:
         image_pil = PILImage.open(img_path)
         prompt = f"خبير جودة. الموديل وجد: {yolo_detections}. اشرح التأثير الفني باختصار JSON."
-        gemini_resp = gemini_model.generate_content([prompt, image_pil], request_options={"timeout": 5})
+        gemini_resp = get_gemini().generate_content([prompt, image_pil], request_options={"timeout": 5})
         import re
         json_match = re.search(r'\{.*\}', gemini_resp.text, re.DOTALL)
         if json_match and yolo_detections:
@@ -489,7 +501,7 @@ def api_color_recipe():
         # ── توليد الوصفة عبر Gemini ───────────────────────────────────
         try:
             prompt = build_gemini_paint_prompt(hex_code, r_val, g_val, b_val, color_name_ar)
-            gemini_response = gemini_model.generate_content(prompt)
+            gemini_response = get_gemini().generate_content(prompt)
             recipe_markdown = gemini_response.text.strip()
         except Exception as gemini_err:
             print(f"⚠️ Gemini Recipe Generation failed, using local rule-based fallback. Error: {gemini_err}")

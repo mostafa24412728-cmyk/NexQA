@@ -5,33 +5,59 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // ── عنوان الخادم (قابل للتخصيص من الإعدادات) ──────────────────────
-  static const String _defaultIp = '192.168.100.6';
-  static const int _defaultPort = 5001;
+  // ── عنوان الخادم الإنتاجي على Railway ────────────────────────────
+  /// رابط الـ Backend المنشور على Railway.com
+  /// سيُحدَّث تلقائياً بعد أول deployment
+  static const String _productionUrl =
+      'https://nexqa-engine-production.up.railway.app';
 
-  static String _serverIp = _defaultIp;
-  static int _serverPort = _defaultPort;
+  /// وضع التطوير المحلي (شبكة منزلية)
+  static const String _devIp = '192.168.100.6';
+  static const int _devPort = 5001;
 
-  static String get baseUrl => 'http://$_serverIp:$_serverPort';
+  // القيم الافتراضية تستخدم الرابط الإنتاجي
+  static String _customUrl = _productionUrl;
+  static bool _useCustom = false;
+
+  /// الرابط الفعلي المستخدم
+  static String get baseUrl => _useCustom ? _customUrl : _productionUrl;
 
   /// تحميل إعدادات الخادم من SharedPreferences
   static Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    _serverIp = prefs.getString('server_ip') ?? _defaultIp;
-    _serverPort = prefs.getInt('server_port') ?? _defaultPort;
+    final saved = prefs.getString('server_url');
+    if (saved != null && saved.isNotEmpty) {
+      _customUrl = saved;
+      _useCustom = true;
+    } else {
+      _useCustom = false;
+    }
   }
 
-  /// حفظ إعدادات الخادم
-  static Future<void> saveSettings(String ip, int port) async {
-    _serverIp = ip;
-    _serverPort = port;
+  /// حفظ عنوان مخصص (للاختبار المحلي من شاشة الإعدادات)
+  static Future<void> saveCustomUrl(String url) async {
+    _customUrl = url.trim();
+    _useCustom = _customUrl.isNotEmpty;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('server_ip', ip);
-    await prefs.setInt('server_port', port);
+    await prefs.setString('server_url', _customUrl);
   }
 
-  static String get currentIp => _serverIp;
-  static int get currentPort => _serverPort;
+  /// إعادة الضبط للرابط الإنتاجي
+  static Future<void> resetToProduction() async {
+    _useCustom = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('server_url');
+  }
+
+  // للتوافق مع شاشة الإعدادات القديمة
+  static Future<void> saveSettings(String ip, int port) async {
+    final url = ip.startsWith('http') ? ip : 'http://$ip:$port';
+    await saveCustomUrl(url);
+  }
+
+  static String get currentIp =>
+      _useCustom ? _customUrl : _productionUrl;
+  static int get currentPort => _useCustom ? _devPort : 443;
 
   // ── فحص جودة الخشب ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> predict(String imagePath,
