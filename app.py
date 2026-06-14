@@ -177,59 +177,72 @@ def api_predict():
     img_path = Path(UPLOAD_FOLDER) / f"mob_{file.filename}"
     file.save(img_path)
     
-    results = get_model().predict(img_path, conf=0.15, verbose=False)
+    # --- GEMINI VISION (Primary Detector for Wood) ---
+    import json
+    import google.generativeai as genai
+    from PIL import Image as PILImage
     
-    yolo_detections = []
-    expert_report = []
-    
-    for r in results:
-        for box in r.boxes:
-            label = get_model().names[int(box.cls[0])]
-            conf = float(box.conf[0])
-            yolo_detections.append(label)
-            
-            # Get Expert Knowledge
-            info = DEFECT_KNOWLEDGE.get(label.lower(), {
-                "desc": f"تم اكتشاف {label} بواسطة نظام الرؤية.",
-                "impact": "يؤثر على جودة المنتج النهائي."
-            })
-            
-            expert_report.append({
-                "name": label,
-                "description": info["desc"],
-                "impact": info["impact"],
-                "confidence": conf
-            })
-
-    if not yolo_detections:
-        final_status = "passed"
-        expert_report = [{
-            "name": "None",
-            "description": "الخشب سليم تماماً ومطابق للمواصفات القياسية.",
-            "impact": "لا يوجد أي تأثير سلبي؛ اللوح جاهز للاستخدام الإنشائي.",
-            "confidence": 1.0
-        }]
-    else:
-        final_status = "rejected"
-
-    # Gemini Fallback (Optional)
     try:
-        image_pil = PILImage.open(img_path)
-        prompt = f"خبير جودة. الموديل وجد: {yolo_detections}. اشرح التأثير الفني باختصار JSON."
-        gemini_resp = get_gemini().generate_content([prompt, image_pil], request_options={"timeout": 5})
-        import re
-        json_match = re.search(r'\{.*\}', gemini_resp.text, re.DOTALL)
-        if json_match and yolo_detections:
-             # If Gemini works, we can enrich the report
-             pass 
+        model = get_gemini()
+        img = PILImage.open(img_path)
+        prompt = """
+أنت خبير جودة أخشاب. افحص هذه الصورة بدقة شديدة.
+هل يوجد بها أي عيوب مثل (عقدة خشبية knot، شق crack، تعفن rot، حشرات، تقشر، انحناء)؟
+قم بالرد بصيغة JSON فقط كالتالي (بدون أي نصوص أخرى أو Markdown):
+{
+  "is_healthy": false,
+  "defects": [
+    {"name": "عقدة خشبية", "description": "يوجد عقدة ظاهرة في الخشب", "impact": "قد تؤثر على المظهر والقوة", "confidence": 0.95}
+  ]
+}
+إذا كان الخشب سليم تماماً، اجعل is_healthy: true و defects فارغة مصفوفة.
+"""
+        response = model.generate_content([prompt, img])
+        resp_text = response.text.replace('```json', '').replace('```', '').strip()
+        data = json.loads(resp_text)
+        
+        is_healthy = data.get('is_healthy', True)
+        defects = data.get('defects', [])
+        
+        expert_report = []
+        if is_healthy or not defects:
+            final_status = "passed"
+            expert_report = [{
+                "name": "None",
+                "description": "الخشب سليم تماماً ومطابق للمواصفات القياسية.",
+                "impact": "لا يوجد أي تأثير سلبي؛ اللوح جاهز للاستخدام الإنشائي.",
+                "confidence": 1.0
+            }]
+        else:
+            final_status = "rejected"
+            for d in defects:
+                expert_report.append({
+                    "name": d.get('name', 'عيب غير معروف'),
+                    "description": d.get('description', ''),
+                    "impact": d.get('impact', ''),
+                    "confidence": float(d.get('confidence', 0.9))
+                })
+                
     except Exception as e:
-        print(f"⚠️ Gemini Skipped: {e}")
+        print(f"Gemini Error: {e}")
+        # Fallback to rejected on error
+        final_status = "rejected"
+        expert_report = [{
+            "name": "Error",
+            "description": f"فشل في تحليل الصورة: {str(e)}",
+            "impact": "يرجى المحاولة مرة أخرى",
+            "confidence": 0.0
+        }]
 
-    # Plot Detections
+    # Plot Detections (Fallback to Original Image since Gemini doesn't return boxes)
     import cv2
     import numpy as np
-    res = results[0]
-    processed_img = res.plot()
+    
+    # Just read the image, add a border based on status
+    processed_img = cv2.imread(str(img_path))
+    color = (0, 255, 0) if final_status == "passed" else (0, 0, 255)
+    cv2.rectangle(processed_img, (0, 0), (processed_img.shape[1], processed_img.shape[0]), color, 10)
+    
     _, buffer = cv2.imencode('.jpg', processed_img)
     encoded_string = base64.b64encode(buffer).decode('utf-8')
     

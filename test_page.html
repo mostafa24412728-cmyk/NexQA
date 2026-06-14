@@ -14,21 +14,19 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     :root {
-      --primary: #8a2be2;
-      --primary-light: #00e5ff;
-      --accent: #ff1493;
-      --accent2: #ff4444;
+      --primary: #6c3ce1;
+      --primary-light: #9b6dff;
+      --accent: #f4a261;
+      --accent2: #e76f51;
       --wood: #8b5e3c;
       --wood-light: #c49a6c;
-      --dark: #060912;
-      --dark2: #111827;
-      --dark3: #1e2433;
-      --glass: rgba(255,255,255,0.03);
-      --glass-border: rgba(255,255,255,0.08);
-      --text: #f0f4ff;
-      --text-muted: #6b7280;
-      --success: #00e676;
-      --destructive: #ff4444;
+      --dark: #0a0a14;
+      --dark2: #12121f;
+      --dark3: #1a1a2e;
+      --glass: rgba(255,255,255,0.05);
+      --glass-border: rgba(255,255,255,0.1);
+      --text: #e8e8f0;
+      --text-muted: #8888aa;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
@@ -118,12 +116,12 @@
     .result-box { background:var(--glass);border:1px solid var(--glass-border);border-radius:16px;padding:24px;backdrop-filter:blur(10px); }
     .result-box h3 { font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px; }
     .status-badge { display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:20px;font-size:1.1rem;font-weight:700; }
-    .badge-ok { background:rgba(0,230,118,0.15);color:var(--success);border:1px solid rgba(0,230,118,0.3); }
-    .badge-defect { background:rgba(255,68,68,0.15);color:var(--destructive);border:1px solid rgba(255,68,68,0.3); }
-    .confidence-bar { height:8px;background:rgba(255,255,255,0.05);border-radius:4px;margin-top:12px;overflow:hidden; }
-    .confidence-fill { height:100%;border-radius:4px;transition:width 1s ease;background:linear-gradient(90deg,var(--primary-light),var(--primary)); }
+    .badge-ok { background:rgba(61,220,132,0.2);color:#3ddc84;border:1px solid rgba(61,220,132,0.4); }
+    .badge-defect { background:rgba(231,111,81,0.2);color:#e76f51;border:1px solid rgba(231,111,81,0.4); }
+    .confidence-bar { height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:12px;overflow:hidden; }
+    .confidence-fill { height:100%;border-radius:4px;transition:width 1s ease;background:linear-gradient(90deg,var(--primary-light),var(--accent)); }
     .defect-list { list-style:none; }
-    .defect-list li { padding:8px 12px;margin-bottom:6px;border-radius:8px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);font-size:0.9rem;display:flex;align-items:center;gap:8px; }
+    .defect-list li { padding:8px 12px;margin-bottom:6px;border-radius:8px;background:rgba(231,111,81,0.1);border:1px solid rgba(231,111,81,0.2);font-size:0.9rem;display:flex;align-items:center;gap:8px; }
     .defect-list li::before { content:'⚠'; }
     .processed-img { width:100%;border-radius:12px;margin-top:12px;border:1px solid var(--glass-border); }
     #loading-area { display:none; }
@@ -190,16 +188,46 @@
 </head>
 <body>
 
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
 <!-- NAV -->
 <nav>
   <div class="logo">NexQA 🪵</div>
   <div class="nav-links">
     <a href="#demo">تجربة حية</a>
+    <a href="#wood-types">أنواع الخشب</a>
     <a href="#how">كيف يعمل</a>
     <a href="#download">تحميل</a>
   </div>
   <div class="nav-badge" id="status-badge">⏳ جاري الاتصال...</div>
 </nav>
+
+<!-- WOOD TICKER -->
+<div class="wood-ticker" style="position:relative;z-index:1;margin-top:72px;">
+  <div class="ticker-inner">
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب البلوط</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الزان</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الصنوبر</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الأرز</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الجوز</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الماهوجني</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب البامبو</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>الخشب الحبيبي</span>
+    <!-- Duplicate for seamless loop -->
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب البلوط</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الزان</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الصنوبر</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الأرز</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الجوز</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب الماهوجني</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>خشب البامبو</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>الخشب الحبيبي</span>
+  </div>
+</div>
 
 <!-- HERO -->
 <section class="hero" style="min-height:calc(100vh - 110px);padding-top:60px;">
@@ -230,6 +258,20 @@
   <h2 class="section-title reveal">🔬 جرّب فحص الخشب الآن</h2>
   <p class="section-sub reveal">ارفع صورة قطعة خشب وسيكشف النظام أي عيوب فورياً</p>
   <div class="demo-card reveal">
+
+    <!-- Wood type selector -->
+    <div style="margin-bottom:20px;text-align:center;">
+      <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:12px;">اختر نوع الخشب (اختياري — للتقرير الأدق):</p>
+      <div class="wood-selector">
+        <button class="wood-btn active" onclick="selectWood(this,'عام')">🪵 عام</button>
+        <button class="wood-btn" onclick="selectWood(this,'بلوط')">🌳 بلوط</button>
+        <button class="wood-btn" onclick="selectWood(this,'صنوبر')">🌲 صنوبر</button>
+        <button class="wood-btn" onclick="selectWood(this,'زان')">🌿 زان</button>
+        <button class="wood-btn" onclick="selectWood(this,'أرز')">🌴 أرز</button>
+        <button class="wood-btn" onclick="selectWood(this,'جوز')">🥜 جوز</button>
+        <button class="wood-btn" onclick="selectWood(this,'رقائقي')">📋 رقائقي</button>
+      </div>
+    </div>
 
     <div class="upload-zone" id="uploadZone">
       <span class="upload-icon">🪵</span>
@@ -281,7 +323,21 @@
   </div>
 </section>
 
-<!-- WOOD TYPES SECTION REMOVED -->
+<!-- WOOD TYPES -->
+<section class="section" id="wood-types">
+  <h2 class="section-title reveal">🌳 أنواع الخشب المدعومة</h2>
+  <p class="section-sub reveal">النظام مدرّب على أنواع متعددة ويمكن تحديثه بداتا جديدة في أي وقت</p>
+  <div class="wood-grid">
+    <div class="wood-card reveal"><div class="wood-emoji">🌳</div><div class="wood-name">بلوط (Oak)</div><div class="wood-desc">صلب ومتين، يُستخدم في الأثاث والأرضيات</div><span class="wood-badge badge-supported">✅ مدعوم</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">🌲</div><div class="wood-name">صنوبر (Pine)</div><div class="wood-desc">خشب ليّن شائع في البناء والديكور</div><span class="wood-badge badge-supported">✅ مدعوم</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">🌿</div><div class="wood-name">زان (Beech)</div><div class="wood-desc">قوي ومتجانس، مثالي للأثاث</div><span class="wood-badge badge-supported">✅ مدعوم</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">🌴</div><div class="wood-name">أرز (Cedar)</div><div class="wood-desc">مقاوم للحشرات والرطوبة، رائحة مميزة</div><span class="wood-badge badge-supported">✅ مدعوم</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">🥜</div><div class="wood-name">جوز (Walnut)</div><div class="wood-desc">فاخر وداكن، للأثاث الراقي</div><span class="wood-badge badge-soon">🔜 قريباً</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">🪵</div><div class="wood-name">ماهوجني</div><div class="wood-desc">مقاوم، يُستخدم في الأثاث الفاخر والقوارب</div><span class="wood-badge badge-soon">🔜 قريباً</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">📋</div><div class="wood-name">رقائقي (Plywood)</div><div class="wood-desc">اقتصادي وخفيف الوزن، للبناء السريع</div><span class="wood-badge badge-supported">✅ مدعوم</span></div>
+    <div class="wood-card reveal"><div class="wood-emoji">➕</div><div class="wood-name">نوع جديد؟</div><div class="wood-desc">أرسل داتا تدريب جديدة ونضيف دعم أي نوع خشب</div><span class="wood-badge" style="background:rgba(108,60,225,0.2);color:var(--primary-light)">📤 تواصل معنا</span></div>
+  </div>
+</section>
 
 <!-- HOW IT WORKS -->
 <section class="section" id="how">
@@ -437,60 +493,33 @@ async function analyzeImage() {
   }
 }
 
-function showResults(resp) {
-  const isOk = resp.status === 'passed' || resp.status === 'ok';
-  
-  // Flask returns `data` array which is `expert_report`.
-  const report = resp.data || [];
-  let conf = 0;
-  if(report.length > 0 && report[0].confidence) {
-     conf = Math.round((report[0].confidence) * 100);
-  }
-  
-  // Status badge
-  document.getElementById('status-result').innerHTML = `
-    <span class="status-badge ${isOk ? 'badge-ok' : 'badge-defect'}">
-      ${isOk ? '✅ خشب سليم' : '❌ به عيوب — مرفوض'}
-    </span>`;
-    
-  setTimeout(() => { document.getElementById('conf-bar').style.width = conf + '%'; }, 100);
+function showResults(data) {
+  const isOk = (data.status||'') === 'ok' || (data.status||'') === 'pass';
+  const conf = Math.round((data.confidence||0)*100);
+  document.getElementById('status-result').innerHTML = `<span class="status-badge ${isOk?'badge-ok':'badge-defect'}">${isOk?'✅ خشب سليم':'❌ به عيوب — مرفوض'}</span>`;
+  setTimeout(()=>{ document.getElementById('conf-bar').style.width=conf+'%'; },100);
   document.getElementById('conf-text').textContent = `نسبة الثقة: ${conf}%`;
   document.getElementById('wood-type-result').textContent = `نوع الخشب: ${selectedWood}`;
 
-  // Defects
   const ul = document.getElementById('defect-list');
   ul.innerHTML = '';
-  
-  // If it's OK, report[0].name will be "None"
-  if(isOk) {
-    ul.innerHTML = '<li style="color:#3ddc84;border-color:rgba(61,220,132,0.3);background:rgba(61,220,132,0.1)">لا عيوب مكتشفة ✅</li>';
-  } else {
-    report.forEach(d => {
-      const li = document.createElement('li');
-      li.textContent = translateDefect(d.name);
-      ul.appendChild(li);
-    });
-  }
+  const defects = data.yolo_detections||[];
+  if(!defects.length) ul.innerHTML = '<li style="color:#3ddc84;border-color:rgba(61,220,132,0.3);background:rgba(61,220,132,0.1)">لا عيوب مكتشفة ✅</li>';
+  else defects.forEach(d => { const li=document.createElement('li'); li.textContent=translateDefect(d); ul.appendChild(li); });
 
-  // Processed image
-  if(resp.image_base64) {
-    document.getElementById('processed-img').src = 'data:image/jpeg;base64,' + resp.image_base64;
+  if(data.processed_image) {
+    document.getElementById('processed-img').src = 'data:image/jpeg;base64,'+data.processed_image;
     document.getElementById('processed-box').style.display = 'block';
-  } else {
-    document.getElementById('processed-box').style.display = 'none';
-  }
+  } else document.getElementById('processed-box').style.display='none';
 
-  // Expert report
-  if(report.length > 0) {
-    const reportHtml = report.map(r => `<p style="margin-bottom:8px">• ${r.name || 'العيب'}: ${r.description || ''}</p>`).join('');
-    document.getElementById('expert-report').innerHTML = reportHtml || '<p>لا تفاصيل إضافية</p>';
-    document.getElementById('expert-box').style.display = 'block';
-  } else {
-    document.getElementById('expert-box').style.display = 'none';
-  }
+  const report = data.expert_report||[];
+  if(report.length) {
+    document.getElementById('expert-report').innerHTML = report.map(r=>`<p style="margin-bottom:8px">• ${r.defect||''}: ${r.impact||r.description||''}</p>`).join('');
+    document.getElementById('expert-box').style.display='block';
+  } else document.getElementById('expert-box').style.display='none';
 
-  document.getElementById('result-area').style.display = 'block';
-  document.getElementById('result-area').scrollIntoView({behavior: 'smooth', block: 'start'});
+  document.getElementById('result-area').style.display='block';
+  document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function translateDefect(d) {
