@@ -1,18 +1,16 @@
 import os
-import cv2
 import base64
 import json
 import datetime
 import requests
-import numpy as np
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from ultralytics import YOLO
 from pathlib import Path
 from PIL import Image as PILImage
-import google.generativeai as genai
 from dotenv import load_dotenv
+# NOTE: ultralytics, cv2, numpy, google.generativeai are imported lazily inside
+#       get_model() / get_gemini() to reduce startup RAM on Railway free tier.
 
 # --- CONFIGURATION ---
 load_dotenv()
@@ -64,6 +62,7 @@ def get_model():
     global _model
     if _model is None:
         print("⏳ Loading YOLO model...")
+        from ultralytics import YOLO
         _model = YOLO('best.pt')
         print("✅ YOLO Model Loaded Successfully.")
     return _model
@@ -71,6 +70,7 @@ def get_model():
 def get_gemini():
     global _gemini_model
     if _gemini_model is None:
+        import google.generativeai as genai
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
         _gemini_model = genai.GenerativeModel('gemini-1.5-flash')
     return _gemini_model
@@ -217,6 +217,8 @@ def api_predict():
         print(f"⚠️ Gemini Skipped: {e}")
 
     # Plot Detections
+    import cv2
+    import numpy as np
     res = results[0]
     processed_img = res.plot()
     _, buffer = cv2.imencode('.jpg', processed_img)
@@ -288,6 +290,7 @@ COLOR_NAMES_AR = [
 
 def get_dominant_color(img_path: str, n_clusters: int = 3):
     """استخرج اللون المسيطر من الصورة بدون sklearn."""
+    import numpy as np
     img = PILImage.open(img_path).convert("RGB")
     img = img.resize((150, 150))  # تصغير للسرعة
     pixels = np.array(img).reshape(-1, 3).astype(np.float32)
