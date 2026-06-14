@@ -14,19 +14,21 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     :root {
-      --primary: #6c3ce1;
-      --primary-light: #9b6dff;
-      --accent: #f4a261;
-      --accent2: #e76f51;
+      --primary: #8a2be2;
+      --primary-light: #00e5ff;
+      --accent: #ff1493;
+      --accent2: #ff4444;
       --wood: #8b5e3c;
       --wood-light: #c49a6c;
-      --dark: #0a0a14;
-      --dark2: #12121f;
-      --dark3: #1a1a2e;
-      --glass: rgba(255,255,255,0.05);
-      --glass-border: rgba(255,255,255,0.1);
-      --text: #e8e8f0;
-      --text-muted: #8888aa;
+      --dark: #060912;
+      --dark2: #111827;
+      --dark3: #1e2433;
+      --glass: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.08);
+      --text: #f0f4ff;
+      --text-muted: #6b7280;
+      --success: #00e676;
+      --destructive: #ff4444;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
@@ -116,12 +118,12 @@
     .result-box { background:var(--glass);border:1px solid var(--glass-border);border-radius:16px;padding:24px;backdrop-filter:blur(10px); }
     .result-box h3 { font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px; }
     .status-badge { display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:20px;font-size:1.1rem;font-weight:700; }
-    .badge-ok { background:rgba(61,220,132,0.2);color:#3ddc84;border:1px solid rgba(61,220,132,0.4); }
-    .badge-defect { background:rgba(231,111,81,0.2);color:#e76f51;border:1px solid rgba(231,111,81,0.4); }
-    .confidence-bar { height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:12px;overflow:hidden; }
-    .confidence-fill { height:100%;border-radius:4px;transition:width 1s ease;background:linear-gradient(90deg,var(--primary-light),var(--accent)); }
+    .badge-ok { background:rgba(0,230,118,0.15);color:var(--success);border:1px solid rgba(0,230,118,0.3); }
+    .badge-defect { background:rgba(255,68,68,0.15);color:var(--destructive);border:1px solid rgba(255,68,68,0.3); }
+    .confidence-bar { height:8px;background:rgba(255,255,255,0.05);border-radius:4px;margin-top:12px;overflow:hidden; }
+    .confidence-fill { height:100%;border-radius:4px;transition:width 1s ease;background:linear-gradient(90deg,var(--primary-light),var(--primary)); }
     .defect-list { list-style:none; }
-    .defect-list li { padding:8px 12px;margin-bottom:6px;border-radius:8px;background:rgba(231,111,81,0.1);border:1px solid rgba(231,111,81,0.2);font-size:0.9rem;display:flex;align-items:center;gap:8px; }
+    .defect-list li { padding:8px 12px;margin-bottom:6px;border-radius:8px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);font-size:0.9rem;display:flex;align-items:center;gap:8px; }
     .defect-list li::before { content:'⚠'; }
     .processed-img { width:100%;border-radius:12px;margin-top:12px;border:1px solid var(--glass-border); }
     #loading-area { display:none; }
@@ -493,33 +495,60 @@ async function analyzeImage() {
   }
 }
 
-function showResults(data) {
-  const isOk = (data.status||'') === 'ok' || (data.status||'') === 'pass';
-  const conf = Math.round((data.confidence||0)*100);
-  document.getElementById('status-result').innerHTML = `<span class="status-badge ${isOk?'badge-ok':'badge-defect'}">${isOk?'✅ خشب سليم':'❌ به عيوب — مرفوض'}</span>`;
-  setTimeout(()=>{ document.getElementById('conf-bar').style.width=conf+'%'; },100);
+function showResults(resp) {
+  const isOk = resp.status === 'passed' || resp.status === 'ok';
+  
+  // Flask returns `data` array which is `expert_report`.
+  const report = resp.data || [];
+  let conf = 0;
+  if(report.length > 0 && report[0].confidence) {
+     conf = Math.round((report[0].confidence) * 100);
+  }
+  
+  // Status badge
+  document.getElementById('status-result').innerHTML = `
+    <span class="status-badge ${isOk ? 'badge-ok' : 'badge-defect'}">
+      ${isOk ? '✅ خشب سليم' : '❌ به عيوب — مرفوض'}
+    </span>`;
+    
+  setTimeout(() => { document.getElementById('conf-bar').style.width = conf + '%'; }, 100);
   document.getElementById('conf-text').textContent = `نسبة الثقة: ${conf}%`;
   document.getElementById('wood-type-result').textContent = `نوع الخشب: ${selectedWood}`;
 
+  // Defects
   const ul = document.getElementById('defect-list');
   ul.innerHTML = '';
-  const defects = data.yolo_detections||[];
-  if(!defects.length) ul.innerHTML = '<li style="color:#3ddc84;border-color:rgba(61,220,132,0.3);background:rgba(61,220,132,0.1)">لا عيوب مكتشفة ✅</li>';
-  else defects.forEach(d => { const li=document.createElement('li'); li.textContent=translateDefect(d); ul.appendChild(li); });
+  
+  // If it's OK, report[0].name will be "None"
+  if(isOk) {
+    ul.innerHTML = '<li style="color:#3ddc84;border-color:rgba(61,220,132,0.3);background:rgba(61,220,132,0.1)">لا عيوب مكتشفة ✅</li>';
+  } else {
+    report.forEach(d => {
+      const li = document.createElement('li');
+      li.textContent = translateDefect(d.name);
+      ul.appendChild(li);
+    });
+  }
 
-  if(data.processed_image) {
-    document.getElementById('processed-img').src = 'data:image/jpeg;base64,'+data.processed_image;
+  // Processed image
+  if(resp.image_base64) {
+    document.getElementById('processed-img').src = 'data:image/jpeg;base64,' + resp.image_base64;
     document.getElementById('processed-box').style.display = 'block';
-  } else document.getElementById('processed-box').style.display='none';
+  } else {
+    document.getElementById('processed-box').style.display = 'none';
+  }
 
-  const report = data.expert_report||[];
-  if(report.length) {
-    document.getElementById('expert-report').innerHTML = report.map(r=>`<p style="margin-bottom:8px">• ${r.defect||''}: ${r.impact||r.description||''}</p>`).join('');
-    document.getElementById('expert-box').style.display='block';
-  } else document.getElementById('expert-box').style.display='none';
+  // Expert report
+  if(report.length > 0) {
+    const reportHtml = report.map(r => `<p style="margin-bottom:8px">• ${r.name || 'العيب'}: ${r.description || ''}</p>`).join('');
+    document.getElementById('expert-report').innerHTML = reportHtml || '<p>لا تفاصيل إضافية</p>';
+    document.getElementById('expert-box').style.display = 'block';
+  } else {
+    document.getElementById('expert-box').style.display = 'none';
+  }
 
-  document.getElementById('result-area').style.display='block';
-  document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('result-area').style.display = 'block';
+  document.getElementById('result-area').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
 function translateDefect(d) {
