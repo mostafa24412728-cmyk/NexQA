@@ -198,6 +198,9 @@ def api_predict():
   "defects": [
     {"name": "عقدة خشبية", "description": "يوجد عقدة ظاهرة في الخشب", "impact": "قد تؤثر على المظهر والقوة", "confidence": 0.95}
   ]
+}
+إذا كان الخشب سليم تماماً، اجعل is_healthy: true و defects فارغة مصفوفة.
+"""
         # Try newest flash-latest first, then fallback to standard flash
         import google.generativeai as genai
         try:
