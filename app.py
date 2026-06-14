@@ -72,7 +72,11 @@ def get_gemini():
     if _gemini_model is None:
         import google.generativeai as genai
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        _gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        # Using -latest to avoid 404 on some API key regions/versions
+        try:
+            _gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        except:
+            _gemini_model = genai.GenerativeModel('gemini-1.5-flash')
     return _gemini_model
 
 class ProductRecord(db.Model):
@@ -194,10 +198,20 @@ def api_predict():
   "defects": [
     {"name": "عقدة خشبية", "description": "يوجد عقدة ظاهرة في الخشب", "impact": "قد تؤثر على المظهر والقوة", "confidence": 0.95}
   ]
-}
-إذا كان الخشب سليم تماماً، اجعل is_healthy: true و defects فارغة مصفوفة.
-"""
-        response = model.generate_content([prompt, img])
+        # Try newest flash-latest first, then fallback to standard flash
+        import google.generativeai as genai
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            response = model.generate_content([prompt, img])
+        except Exception as first_e:
+            try:
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content([prompt, img])
+            except Exception as second_e:
+                # Absolute fallback for older API versions
+                model = genai.GenerativeModel('gemini-pro-vision')
+                response = model.generate_content([prompt, img])
+                
         resp_text = response.text.replace('```json', '').replace('```', '').strip()
         data = json.loads(resp_text)
         
