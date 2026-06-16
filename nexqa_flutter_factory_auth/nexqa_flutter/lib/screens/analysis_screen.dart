@@ -86,7 +86,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     String status = 'passed';
 
     if (response['success'] == true) {
-      final List data = response['data'];
+      status = response['status'] ?? 'passed';
+      final List data = response['data'] ?? [];
       if (data.isNotEmpty) {
         // Find highest confidence defect
         var bestMatch = data.first;
@@ -99,7 +100,6 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         defectDescription = bestMatch['description'];
         defectImpact = bestMatch['impact'];
         confidence = (bestMatch['confidence'] as num).toDouble() * 100;
-        status = 'rejected';
       }
     } else {
       // If API fails, fallback to some logic or show error

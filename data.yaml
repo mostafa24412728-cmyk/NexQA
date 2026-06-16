@@ -1,0 +1,21 @@
+names:
+- Blue stain
+- Crack
+- Dead knot
+- Knot missing
+- Knot with crack
+- Live knot
+- Marrow
+- Overgrown
+- Quartzity
+- Resin
+nc: 10
+roboflow:
+  license: CC BY 4.0
+  project: wood-defect-detection-jvj8f
+  url: https://universe.roboflow.com/babulal-agrawal-xcfdx/wood-defect-detection-jvj8f/dataset/1
+  version: 1
+  workspace: babulal-agrawal-xcfdx
+test: ../test/images
+train: ../train/images
+val: ../valid/images

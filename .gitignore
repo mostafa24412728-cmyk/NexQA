@@ -10,3 +10,7 @@ Bounding Boxes - YOLO Format - 1/
 runs/
 *.db
 *.log
+Wood defect detection*
+*.zip
+*.pt
+!best (1).pt

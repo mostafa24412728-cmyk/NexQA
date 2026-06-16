@@ -87900,26 +87900,27 @@ if(e.c==null)return
 q=null
 p=null
 o=100
-if(J.d(a.h(0,"success"),!0)){n=a.h(0,"data")
-m=J.bb(n)
-if(m.gbV(n)){l=m.ga0(n)
-for(m=m.ga5(n);m.A();){k=m.gN()
-if(J.aJt(J.eb(k,d),J.eb(l,d)))l=k}m=J.bb(l)
-j=m.h(l,"name")
-q=m.h(l,"description")
-p=m.h(l,"impact")
-o=A.e7(m.h(l,d))*100
-i="rejected"}else{j="None"
-i="passed"}}else{j="Error: "+A.j(a.h(0,"message"))
-i="error"}s=e.a.d
+if(J.d(a.h(0,"success"),!0)){n=a.h(0,"status")
+if(n==null)n="passed"
+m=a.h(0,"data")
+if(m==null)m=[]
+l=J.bb(m)
+if(l.gbV(m)){k=l.ga0(m)
+for(l=l.ga5(m);l.A();){j=l.gN()
+if(J.aJt(J.eb(j,d),J.eb(k,d)))k=j}l=J.bb(k)
+i=l.h(k,"name")
+q=l.h(k,"description")
+p=l.h(k,"impact")
+o=A.e7(l.h(k,d))*100}else i="None"}else{i="Error: "+A.j(a.h(0,"message"))
+n="error"}s=e.a.d
 if(a.h(0,c)!=null)try{s=B.fV.c3(a.h(0,c))}catch(h){r=A.ab(h)
-A.av7().$1("Failed to decode processed image: "+A.j(r))}m=e.c
-m.toString
+A.av7().$1("Failed to decode processed image: "+A.j(r))}l=e.c
+l.toString
 g=t.gl
-f=new A.fd("#"+(A.bP(m,!1,g).a.length+1),e.a.c,s,i,o,j,q,p,["Acme Corp","Global Tech","Nordic Industries","Pacific Goods"][B.jD.AX(4)],["DHL","FedEx","UPS","Maersk"][B.jD.AX(4)],new A.f3(Date.now(),0,!1))
-m=e.c
-m.toString
-A.bP(m,!1,g).u5(f)
+f=new A.fd("#"+(A.bP(l,!1,g).a.length+1),e.a.c,s,n,o,i,q,p,["Acme Corp","Global Tech","Nordic Industries","Pacific Goods"][B.jD.AX(4)],["DHL","FedEx","UPS","Maersk"][B.jD.AX(4)],new A.f3(Date.now(),0,!1))
+l=e.c
+l.toString
+A.bP(l,!1,g).u5(f)
 g=e.c
 g.toString
 A.cD(g,!1).YH(A.hr(new A.aiS(f),null,t.z))},
