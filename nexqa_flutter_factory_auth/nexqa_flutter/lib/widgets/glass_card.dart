@@ -30,16 +30,16 @@ class GlassCard extends StatelessWidget {
     final glow = glowColor ?? const Color(0xFF00E5FF);
 
     final cardColor = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.white.withOpacity(0.6);
+        ? const Color(0xFF0F141A).withOpacity(0.85) // Elegant dark gray-blue
+        : Colors.white.withOpacity(0.8);
     final borderColor = isDark
-        ? Colors.white.withOpacity(0.08)
-        : Colors.white.withOpacity(0.7);
+        ? const Color(0xFF1F2937) // Clean subtle border
+        : const Color(0xFFE5E7EB);
 
     Widget card = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           width: width,
           height: height,
@@ -47,13 +47,20 @@ class GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: borderColor, width: 1),
+            border: Border.all(color: borderColor, width: 1.2),
             boxShadow: [
-              BoxShadow(
-                color: glow.withOpacity(isDark ? 0.08 : 0.05),
-                blurRadius: 20,
-                spreadRadius: 0,
-              ),
+              if (isDark)
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              else
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
             ],
           ),
           child: child,

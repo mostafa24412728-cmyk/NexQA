@@ -124,6 +124,10 @@ def flutter_app():
 def flutter_app_files(path):
     return send_from_directory('static/flutter_web', path)
 
+@app.route('/download-app')
+def download_app():
+    return send_from_directory('static/downloads', 'nexqa-app.apk', as_attachment=True)
+
 # ── المصادقة ──────────────────────────────────────────────────────────
 import hashlib
 
