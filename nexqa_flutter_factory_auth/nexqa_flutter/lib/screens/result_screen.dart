@@ -148,6 +148,72 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (product.defectDescription != null || product.defectImpact != null) ...[
+                    GlassCard(
+                      padding: const EdgeInsets.all(20),
+                      glowColor: Colors.orange,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.psychology, color: Colors.orange),
+                              const SizedBox(width: 8),
+                              Text(
+                                '🤖 تقرير Gemini AI',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.foreground,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (product.defectDescription != null) ...[
+                            Text(
+                              'التشخيص:',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              product.defectDescription!,
+                              style: GoogleFonts.tajawal(
+                                fontSize: 14,
+                                color: colors.foreground,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          if (product.defectImpact != null) ...[
+                            Text(
+                              '⚠️ ماذا سيحدث لو استخدمت هذه الخشبة؟',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              product.defectImpact!,
+                              style: GoogleFonts.tajawal(
+                                fontSize: 14,
+                                color: colors.foreground,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: kIsWeb

@@ -80,6 +80,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     
     final rng = Random();
     String defectType = 'None';
+    String? defectDescription;
+    String? defectImpact;
     double confidence = 100.0;
     String status = 'passed';
 
@@ -94,6 +96,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
           }
         }
         defectType = bestMatch['name'];
+        defectDescription = bestMatch['description'];
+        defectImpact = bestMatch['impact'];
         confidence = (bestMatch['confidence'] as num).toDouble() * 100;
         status = 'rejected';
       }
@@ -128,6 +132,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       status: status,
       confidence: confidence,
       defectType: defectType,
+      defectDescription: defectDescription,
+      defectImpact: defectImpact,
       buyer: buyers[rng.nextInt(buyers.length)],
       shippingCompany: shippers[rng.nextInt(shippers.length)],
       inspectedAt: DateTime.now(),

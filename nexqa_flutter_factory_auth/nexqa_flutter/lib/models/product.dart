@@ -8,6 +8,8 @@ class Product {
   final String status;
   final double confidence;
   final String defectType;
+  final String? defectDescription;
+  final String? defectImpact;
   final String buyer;
   final String shippingCompany;
   final DateTime inspectedAt;
@@ -19,6 +21,8 @@ class Product {
     required this.status,
     required this.confidence,
     required this.defectType,
+    this.defectDescription,
+    this.defectImpact,
     required this.buyer,
     required this.shippingCompany,
     required this.inspectedAt,
@@ -31,6 +35,8 @@ class Product {
         'status': status,
         'confidence': confidence,
         'defectType': defectType,
+        'defectDescription': defectDescription,
+        'defectImpact': defectImpact,
         'buyer': buyer,
         'shippingCompany': shippingCompany,
         'inspectedAt': inspectedAt.toIso8601String(),
@@ -45,6 +51,8 @@ class Product {
         status: json['status'],
         confidence: (json['confidence'] as num).toDouble(),
         defectType: json['defectType'],
+        defectDescription: json['defectDescription'],
+        defectImpact: json['defectImpact'],
         buyer: json['buyer'],
         shippingCompany: json['shippingCompany'],
         inspectedAt: DateTime.parse(json['inspectedAt']),
