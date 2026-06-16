@@ -63,7 +63,8 @@ def get_model():
     if _model is None:
         print("⏳ Loading YOLO model...")
         from ultralytics import YOLO
-        _model = YOLO('best.pt')
+        # Using the fine-tuned wood model (50 epochs)
+        _model = YOLO('best (1).pt')
         print("✅ YOLO Model Loaded Successfully.")
     return _model
 
@@ -172,6 +173,60 @@ def api_login():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+# --- EXPERT KNOWLEDGE BASE FOR 10 WOOD DEFECTS ---
+WOOD_DEFECTS_EXPERT_DB = {
+    "blue stain": {
+        "name": "بقع زرقاء (فطريات)",
+        "desc": "تغير لوني في نسيج الخشب ناتج عن فطر البقعة الزرقاء بسبب الرطوبة العالية.",
+        "impact": "لا يؤثر بشدة على القوة الهيكلية ولكنه يشوه المظهر العام ويقلل من القيمة التجارية للوح، ويمنع استخدامه في الأسطح الشفافة."
+    },
+    "crack": {
+        "name": "شق (Crack)",
+        "desc": "انفصال طولي في ألياف الخشب غالباً نتيجة الانكماش السريع أثناء التجفيف أو الإجهاد الميكانيكي.",
+        "impact": "يضعف الخشب إنشائياً بشكل كبير، وقد يمتد مع مرور الوقت. يجب استبعاده من الأحمال الثقيلة."
+    },
+    "dead knot": {
+        "name": "عقدة ميتة (Dead Knot)",
+        "desc": "بقايا غصن ميت غير متصل بألياف الخشب المحيطة به، وحوافه غامقة أو سوداء.",
+        "impact": "نقطة ضعف شديدة. العقدة قد تسقط تاركة ثقباً، وتقلل من تحمل الخشب للإجهادات بشكل جذري."
+    },
+    "knot missing": {
+        "name": "ثقب عقدة مفقودة",
+        "desc": "فجوة أو ثقب ناتج عن سقوط عقدة ميتة من اللوح الخشبي.",
+        "impact": "يسبب ضعفاً إنشائياً ويشوه المظهر تماماً. يحتاج إلى حشو بمعجون مخصص إذا كان الاستخدام ديكورياً فقط."
+    },
+    "knot with crack": {
+        "name": "عقدة مشقوقة",
+        "desc": "عقدة خشبية تحتوي على شقوق داخلية أو محيطة بها بسبب الجفاف أو الإجهاد.",
+        "impact": "تجمع بين ضعف العقدة وضعف الشق، وتعتبر من أخطر العيوب التي تجعل اللوح غير صالح للإنشاءات."
+    },
+    "live knot": {
+        "name": "عقدة حية (سليمة)",
+        "desc": "بقايا غصن حي ومندمج تماماً مع الألياف المحيطة، بلون مقارب أو أغمق قليلاً.",
+        "impact": "مقبولة في معظم الصناعات ولا تؤثر بشكل كارثي على القوة إذا لم تكن كبيرة جداً، بل تعطي مظهراً ريفياً محبباً."
+    },
+    "marrow": {
+        "name": "لب الخشب (النخاع)",
+        "desc": "المركز الأساسي لجذع الشجرة، وهو نسيج إسفنجي ضعيف.",
+        "impact": "عرضة للتشقق والتعفن بشكل أسرع من باقي اللوح. يفضل قصه والتخلص منه في القطع التي تتحمل أوزاناً."
+    },
+    "overgrown": {
+        "name": "لحاء محتبس (نمو زائد)",
+        "desc": "بقايا لحاء الشجرة الذي تم تغليفه أو احتباسه داخل نسيج الخشب أثناء نمو الشجرة.",
+        "impact": "يخلق نقطة فصل وضعف بين الألياف، ويقلل من الترابط والصلابة الهيكلية للقطعة."
+    },
+    "quartzity": {
+        "name": "تشوه الألياف (Quartzity)",
+        "desc": "تموج أو اضطراب شديد في اتجاه ألياف الخشب الطبيعية.",
+        "impact": "يصعب من عملية المسح (Planing) والدهان، وقد يقلل من تحمل اللوح للشد الطولي."
+    },
+    "resin": {
+        "name": "تسرب الراتنج (صمغ)",
+        "desc": "جيوب أو قنوات تحتوي على مادة صمغية لزجة (الراتنج) داخل ألياف الخشب (خاصة الصنوبر).",
+        "impact": "يتسرب إلى السطح مع الحرارة ويفسد طبقات الدهان (الورنيش)، مما يتطلب معالجة حرارية أو كيميائية قبل الدهان."
+    }
+}
+
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
     if 'image' not in request.files:
@@ -181,89 +236,70 @@ def api_predict():
     img_path = Path(UPLOAD_FOLDER) / f"mob_{file.filename}"
     file.save(img_path)
     
-    # --- GEMINI VISION (Primary Detector for Wood) ---
-    import json
-    import google.generativeai as genai
-    from PIL import Image as PILImage
-    
+    # ---------------------------------------------------------
+    # LOCAL YOLO MODEL DETECTION
     try:
-        model = get_gemini()
-        img = PILImage.open(img_path)
-        prompt = """
-أنت مهندس AI محترف وخبير جودة أخشاب تعمل على مشروع يحدد الخشب السليم من المعيب. الموديل الخاص بك احترافي، دقته عالية جداً، ويقدر يحدد العيوب في الظروف الصعبة زي الإضاءة المختلفة أو أنواع الخشب المختلفة.
-افحص هذه الصورة بدقة شديدة:
-1- حدد إذا كان الخشب سليم أم به عيب.
-2- لو فيه عيب، اذكر ما هو.
-3- اشرح بوضوح كيف سيؤثر هذا العيب على الخشب إذا تم استخدامه في التصنيع.
-
-قم بالرد بصيغة JSON فقط كالتالي (بدون أي نصوص أخرى أو Markdown):
-{
-  "is_healthy": false,
-  "defects": [
-    {"name": "عقدة خشبية", "description": "يوجد عقدة ظاهرة في الخشب", "impact": "قد تؤثر على المظهر والقوة", "confidence": 0.95}
-  ]
-}
-إذا كان الخشب سليم تماماً، اجعل is_healthy: true و defects فارغة مصفوفة.
-"""
-        # Try newest flash-latest first, then fallback to standard flash
-        import google.generativeai as genai
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash-latest')
-            response = model.generate_content([prompt, img])
-        except Exception as first_e:
-            try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                response = model.generate_content([prompt, img])
-            except Exception as second_e:
-                # Absolute fallback for older API versions
-                model = genai.GenerativeModel('gemini-pro-vision')
-                response = model.generate_content([prompt, img])
-                
-        resp_text = response.text.replace('```json', '').replace('```', '').strip()
-        data = json.loads(resp_text)
-        
-        is_healthy = data.get('is_healthy', True)
-        defects = data.get('defects', [])
-        
-        expert_report = []
-        if is_healthy or not defects:
-            final_status = "passed"
-            expert_report = [{
-                "name": "None",
-                "description": "الخشب سليم تماماً ومطابق للمواصفات القياسية.",
-                "impact": "لا يوجد أي تأثير سلبي؛ اللوح جاهز للاستخدام الإنشائي.",
-                "confidence": 1.0
-            }]
-        else:
-            final_status = "rejected"
-            for d in defects:
-                expert_report.append({
-                    "name": d.get('name', 'عيب غير معروف'),
-                    "description": d.get('description', ''),
-                    "impact": d.get('impact', ''),
-                    "confidence": float(d.get('confidence', 0.9))
-                })
-                
+        model = get_model()
+        results = model(str(img_path))
     except Exception as e:
-        print(f"Gemini Error: {e}")
-        # Fallback to rejected on error
-        final_status = "rejected"
-        expert_report = [{
-            "name": "Error",
-            "description": f"فشل في تحليل الصورة: {str(e)}",
-            "impact": "يرجى المحاولة مرة أخرى",
-            "confidence": 0.0
-        }]
+        print("Model Error:", str(e))
+        return jsonify({"success": False, "message": f"Model Error: {str(e)}"}), 500
 
-    # Plot Detections (Fallback to Original Image since Gemini doesn't return boxes)
+    expert_report = []
     import cv2
     import numpy as np
     
-    # Just read the image, add a border based on status
+    # Load image for drawing boxes
     processed_img = cv2.imread(str(img_path))
-    color = (0, 255, 0) if final_status == "passed" else (0, 0, 255)
-    cv2.rectangle(processed_img, (0, 0), (processed_img.shape[1], processed_img.shape[0]), color, 10)
     
+    result = results[0]
+    boxes = result.boxes
+    
+    for i in range(len(boxes)):
+        box = boxes[i]
+        class_id = int(box.cls[0].item())
+        class_name_en = model.names[class_id].lower()
+        confidence = float(box.conf[0].item())
+        
+        # جلب التحليل الهندسي المبرمج مسبقاً
+        info = WOOD_DEFECTS_EXPERT_DB.get(class_name_en, {
+            "name": class_name_en,
+            "desc": "عيب تم اكتشافه بواسطة نظام الرؤية الاصطناعية المخصص.",
+            "impact": "قد يؤثر على جودة وتصنيف اللوح."
+        })
+        
+        if info["name"] not in [e["name"] for e in expert_report]:
+            expert_report.append({
+                "name": info["name"],
+                "description": info["desc"],
+                "impact": info["impact"],
+                "confidence": confidence
+            })
+        
+        # رسم المربعات حول العيوب (Draw bounding boxes)
+        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+        
+        cv2.rectangle(processed_img, (x1, y1), (x2, y2), (0, 0, 255), 3) # مربع أحمر
+        label = f"{class_name_en.title()} {confidence:.2f}"
+        
+        # وضع خلفية للنص ليكون واضحاً
+        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+        cv2.rectangle(processed_img, (x1, y1 - 25), (x1 + tw, y1), (0, 0, 255), -1)
+        cv2.putText(processed_img, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+    # إذا لم يجد الموديل أي عيب
+    if not expert_report:
+        final_status = "passed"
+        expert_report = [{
+            "name": "سليم (لا يوجد عيوب)",
+            "description": "الموديل الاحترافي لم يكتشف أي شقوق، عقد ميتة، تعفن، أو تشوهات في هذه المنطقة.",
+            "impact": "اللوح سليم بنسبة 100% وجاهز للاستخدام في أدق الصناعات الخشبية دون أي معالجة إضافية.",
+            "confidence": 1.0
+        }]
+    else:
+        final_status = "rejected"
+    
+    # تحويل الصورة إلى base64 لإرسالها للتطبيق
     _, buffer = cv2.imencode('.jpg', processed_img)
     encoded_string = base64.b64encode(buffer).decode('utf-8')
     
@@ -615,5 +651,5 @@ def api_color_history():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
 
